@@ -1,7 +1,9 @@
+import { AuthService } from "@/api/auth/authService";
 import DefaultLayout from "@/layouts/default";
-import { Button, Card, CardBody, Image, Input, Textarea } from "@nextui-org/react";
+import { Button, Card, CardBody, Image, Input } from "@nextui-org/react";
 import { useFormik } from "formik";
 import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 import * as Yup from 'yup';
 
 type FormData = {
@@ -9,13 +11,14 @@ type FormData = {
   password: string;
 };
 
-const formInitialData: FormData ={
-	email: '',
-	password: ''
-}
+const formInitialData: FormData = {
+  email: "",
+  password: "",
+};
 const Login = () => {
-	const navigation =  useRouter();
-//   const user = JSON.parse(String(localStorage.getItem("user")));
+  const authService = new AuthService();
+  const navigation = useRouter();
+  const [isLoading, setIsLoading] = useState<boolean>(false)
   const loginFormik = useFormik({
     initialValues: formInitialData,
     validationSchema: Yup.object().shape({
@@ -29,8 +32,18 @@ const Login = () => {
     onSubmit: (values) => handleSubmit(values),
   });
 
-  const handleSubmit = (values: any) => {
-	navigation.push("home")
+  const handleSubmit = async (values: any) => {
+	setIsLoading(true);
+    try {
+      const response = await authService.login(values);
+      setIsLoading(false);
+      if(response) {
+        navigation.push("home")
+      }
+    } catch (err: any) {
+      console.error(err.message)
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -72,7 +85,13 @@ const Login = () => {
                 errorMessage={loginFormik.errors.password}
                 onBlur={loginFormik.handleBlur}
               />
-              <Button color="primary" className="w-3/4" type="submit">
+
+              <Button
+                color="primary"
+                className="w-3/4"
+                type="submit"
+                isLoading={isLoading}
+              >
                 Login
               </Button>
             </form>
